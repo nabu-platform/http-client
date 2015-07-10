@@ -1,0 +1,2 @@
+be.nabu.libs.http.client.BasicAuthentication
+be.nabu.libs.http.client.DigestAuthentication
