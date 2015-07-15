@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import be.nabu.libs.http.api.BasicPrincipal;
-import be.nabu.libs.http.api.client.AuthenticationHandler;
+import be.nabu.libs.http.api.client.ClientAuthenticationHandler;
 import be.nabu.utils.codec.TranscoderUtils;
 import be.nabu.utils.codec.impl.Base64Encoder;
 import be.nabu.utils.io.IOUtils;
@@ -16,7 +16,7 @@ import be.nabu.utils.io.IOUtils;
 /**
  * TODO: which encoding to use for basic authentication?
  */
-public class BasicAuthentication implements AuthenticationHandler {
+public class BasicAuthentication implements ClientAuthenticationHandler {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 	

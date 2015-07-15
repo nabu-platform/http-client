@@ -12,7 +12,7 @@ import java.util.List;
 
 import be.nabu.libs.http.api.HTTPRequest;
 import be.nabu.libs.http.api.HTTPResponse;
-import be.nabu.libs.http.api.client.AuthenticationHandler;
+import be.nabu.libs.http.api.client.ClientAuthenticationHandler;
 import be.nabu.libs.http.api.client.ConnectionHandler;
 import be.nabu.libs.http.api.client.HTTPClient;
 import be.nabu.libs.http.core.DefaultDynamicResourceProvider;
@@ -26,7 +26,7 @@ import be.nabu.utils.mime.impl.MimeUtils;
 public class DefaultHTTPClient implements HTTPClient {
 	
 	private ConnectionHandler connectionHandler;
-	private AuthenticationHandler authenticationHandler;
+	private ClientAuthenticationHandler authenticationHandler;
 	private HTTPExecutor executor;
 	private boolean allowCircularRedirect = false;
 	private DynamicResourceProvider dynamicResourceProvider;
@@ -35,7 +35,7 @@ public class DefaultHTTPClient implements HTTPClient {
 	 */
 	private boolean allowDegradingRedirect = true;
 	
-	public DefaultHTTPClient(ConnectionHandler connectionHandler, AuthenticationHandler authenticationHandler, CookieHandler cookieHandler, boolean useContinue) {
+	public DefaultHTTPClient(ConnectionHandler connectionHandler, ClientAuthenticationHandler authenticationHandler, CookieHandler cookieHandler, boolean useContinue) {
 		this.connectionHandler = connectionHandler;
 		this.executor = new HTTPExecutor(new DefaultDynamicResourceProvider(), cookieHandler, useContinue);
 		this.authenticationHandler = authenticationHandler;
@@ -168,7 +168,7 @@ public class DefaultHTTPClient implements HTTPClient {
 		return connectionHandler;
 	}
 
-	public AuthenticationHandler getAuthenticationHandler() {
+	public ClientAuthenticationHandler getAuthenticationHandler() {
 		return authenticationHandler;
 	}
 

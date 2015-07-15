@@ -5,21 +5,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
-import be.nabu.libs.http.api.client.AuthenticationHandler;
+import be.nabu.libs.http.api.client.ClientAuthenticationHandler;
 
 /**
  * Supports basic & digest
  */
-public class SPIAuthenticationHandler implements AuthenticationHandler {
+public class SPIAuthenticationHandler implements ClientAuthenticationHandler {
 
-	private List<AuthenticationHandler> handlers;
+	private List<ClientAuthenticationHandler> handlers;
 
-	private List<AuthenticationHandler> getHandlers() {
+	private List<ClientAuthenticationHandler> getHandlers() {
 		if (handlers == null) {
 			synchronized(this) {
 				if (handlers == null) {
-					List<AuthenticationHandler> handlers = new ArrayList<AuthenticationHandler>();
-					for (AuthenticationHandler handler : ServiceLoader.load(AuthenticationHandler.class)) {
+					List<ClientAuthenticationHandler> handlers = new ArrayList<ClientAuthenticationHandler>();
+					for (ClientAuthenticationHandler handler : ServiceLoader.load(ClientAuthenticationHandler.class)) {
 						handlers.add(handler);
 					}
 					this.handlers = handlers;
@@ -31,7 +31,7 @@ public class SPIAuthenticationHandler implements AuthenticationHandler {
 
 	@Override
 	public String authenticate(Principal principal, String challenge) {
-		for (AuthenticationHandler handler : getHandlers()) {
+		for (ClientAuthenticationHandler handler : getHandlers()) {
 			String response = handler.authenticate(principal, challenge);
 			if (response != null)
 				return response;

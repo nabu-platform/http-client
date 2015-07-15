@@ -10,7 +10,7 @@ import java.text.ParseException;
 import javax.net.ssl.SSLContext;
 
 import be.nabu.libs.http.api.HTTPResponse;
-import be.nabu.libs.http.api.client.AuthenticationHandler;
+import be.nabu.libs.http.api.client.ClientAuthenticationHandler;
 import be.nabu.libs.http.api.client.ConnectionHandler;
 import be.nabu.libs.http.api.client.Proxy;
 import be.nabu.libs.http.client.connections.PlainConnectionHandler;
@@ -31,10 +31,10 @@ public class HTTPProxy implements Proxy {
 	private HTTPExecutor httpExecutor;
 	private Principal principal;
 	private ConnectionHandler connectionHandler;
-	private AuthenticationHandler authenticationHandler;
+	private ClientAuthenticationHandler authenticationHandler;
 	private boolean secure = false;
 	
-	public HTTPProxy(String host, int port, Principal principal, AuthenticationHandler authenticationHandler, int connectionTimeout, int socketTimeout, SSLContext context) {
+	public HTTPProxy(String host, int port, Principal principal, ClientAuthenticationHandler authenticationHandler, int connectionTimeout, int socketTimeout, SSLContext context) {
 		this.port = port;
 		this.host = host;
 		this.connectionHandler = new PlainConnectionHandler(context, connectionTimeout, socketTimeout);
