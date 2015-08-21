@@ -41,8 +41,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>be.nabu.libs.http</groupId>
-			<artifactId>http-api</artifactId>
+			<groupId>be.nabu.libs.authentication</groupId>
+			<artifactId>authentication-api</artifactId>
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>

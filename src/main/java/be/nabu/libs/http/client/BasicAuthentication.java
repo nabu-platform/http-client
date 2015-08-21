@@ -7,7 +7,7 @@ import java.security.Principal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import be.nabu.libs.http.api.BasicPrincipal;
+import be.nabu.libs.authentication.api.principals.BasicPrincipal;
 import be.nabu.libs.http.api.client.ClientAuthenticationHandler;
 import be.nabu.utils.codec.TranscoderUtils;
 import be.nabu.utils.codec.impl.Base64Encoder;

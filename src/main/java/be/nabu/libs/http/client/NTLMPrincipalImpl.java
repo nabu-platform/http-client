@@ -4,10 +4,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Locale;
 
-import be.nabu.libs.http.api.NTLMPrincipal;
+import be.nabu.libs.authentication.api.principals.NTLMPrincipal;
 
 public class NTLMPrincipalImpl implements NTLMPrincipal {
 
+	private static final long serialVersionUID = 1L;
+	
 	private String hostName, password, name, domain;
 	
 	public NTLMPrincipalImpl(String domain, String username, String password) {
