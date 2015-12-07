@@ -75,7 +75,27 @@ public class DefaultHTTPClient implements HTTPClient {
 			try {
 				// for the actual sending, synchronize on the socket so only one party is interacting with it at the same time
 				synchronized(socket) {
-					response = executor.execute(socket, request, principal, secure, followRedirects);
+					// we try on the socket
+					try {
+						response = executor.execute(socket, request, principal, secure, followRedirects);
+					}
+					// we could have network issues (e.g. remote host restarted or whatever)
+					catch (IOException e) {
+						// close the socket
+						connectionHandler.close(socket);
+						// and try once more
+						socket = connectionHandler.connect(host, port, secure);
+						synchronized(socket) {
+							try {
+								response = executor.execute(socket, request, principal, secure, followRedirects);
+							}
+							// if we still get an exception, just stop
+							catch (IOException f) {
+								connectionHandler.close(socket);
+								throw f;
+							}
+						}
+					}
 				}
 
 				keepAlive = HTTPUtils.keepAlive(response);

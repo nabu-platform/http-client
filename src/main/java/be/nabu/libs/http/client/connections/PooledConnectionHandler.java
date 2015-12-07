@@ -216,6 +216,7 @@ public class PooledConnectionHandler implements ConnectionHandler {
 							socketsInUse[i] = false;
 							sockets[i] = null;
 							amountOfUsedSockets--;
+							closed = true;
 						}
 					}
 				}

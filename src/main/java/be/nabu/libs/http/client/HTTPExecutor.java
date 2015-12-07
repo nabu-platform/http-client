@@ -30,6 +30,8 @@ import be.nabu.libs.http.core.HTTPParser;
 import be.nabu.libs.http.core.HTTPUtils;
 import be.nabu.libs.resources.api.DynamicResourceProvider;
 import be.nabu.utils.io.IOUtils;
+import be.nabu.utils.io.api.ByteBuffer;
+import be.nabu.utils.io.containers.EOFReadableContainer;
 import be.nabu.utils.mime.api.Header;
 import be.nabu.utils.mime.impl.FormatException;
 import be.nabu.utils.mime.impl.MimeHeader;
@@ -93,41 +95,53 @@ public class HTTPExecutor {
 		// only use continue
 		Header expectHeader = request.getContent() != null ? MimeUtils.getHeader("Expect", request.getContent().getHeaders()) : null;
 		boolean forceUseContinue = expectHeader != null && expectHeader.getValue().trim().equalsIgnoreCase("100-Continue");
-		if (forceUseContinue || (request.getVersion() >= 1.1 && continuableMethods.contains(request.getMethod().toUpperCase()) && useContinue && request.getContent() != null)) {
-			logger.trace("> [" + request.hashCode() + "] Headers only: 100-Continue");
-			request.getContent().setHeader(new MimeHeader("Expect", "100-Continue"));
-			formatter.formatRequestHeaders(request, IOUtils.wrap(output));
-			output.flush();
-			HTTPResponse continueResponse = parser.parseResponse(IOUtils.wrap(input));
-			if (continueResponse.getCode() == 100) {
-				logger.trace("> [" + request.hashCode() + "] Headers OK, sending content");
-				formatter.formatRequestContent(request, IOUtils.wrap(output));
+		EOFReadableContainer<ByteBuffer> readable = new EOFReadableContainer<ByteBuffer>(IOUtils.wrap(input));
+		
+		try {
+			if (forceUseContinue || (request.getVersion() >= 1.1 && continuableMethods.contains(request.getMethod().toUpperCase()) && useContinue && request.getContent() != null)) {
+				logger.trace("> [" + request.hashCode() + "] Headers only: 100-Continue");
+				request.getContent().setHeader(new MimeHeader("Expect", "100-Continue"));
+				formatter.formatRequestHeaders(request, IOUtils.wrap(output));
+				output.flush();
+				HTTPResponse continueResponse = parser.parseResponse(readable);
+				if (continueResponse.getCode() == 100) {
+					logger.trace("> [" + request.hashCode() + "] Headers OK, sending content");
+					formatter.formatRequestContent(request, IOUtils.wrap(output));
+				}
+				else {
+					logger.trace("> [" + request.hashCode() + "] Headers rejected [" + continueResponse.getCode() + "]: " + continueResponse.getMessage());
+					return continueResponse;
+				}
 			}
 			else {
-				logger.trace("> [" + request.hashCode() + "] Headers rejected [" + continueResponse.getCode() + "]: " + continueResponse.getMessage());
-				return continueResponse;
+				formatter.formatRequest(request, IOUtils.wrap(output));
+			}
+			
+			output.flush();
+			
+			HTTPResponse response = parser.parseResponse(readable);
+	
+			logger.debug("< socket:" + socket.hashCode() + " [request:" + request.hashCode() + "] (" + (new Date().getTime() - timestamp.getTime()) + "ms) " + response.getCode() + ": " + response.getMessage());
+			if (logger.isTraceEnabled() && response.getContent() != null) {
+				for (Header header : response.getContent().getHeaders()) {
+					logger.trace("	< [" + request.hashCode() + "] " + header.getName() + ": " + header.getValue());
+				}
+			}
+			
+			// push the response into the cookiestore
+			if (cookieHandler != null && response.getContent() != null)
+				cookieHandler.put(uri, getHeadersAsMap(response.getContent().getHeaders()));
+			return response;
+		}
+		catch (ParseException e) {
+			// if the readable was closed, we assume parse exceptions occured because of IO issues
+			if (readable.isEOF()) {
+				throw new IOException("Could not parse the response because the connection was closed", e);
+			}
+			else {
+				throw e;
 			}
 		}
-		else {
-			formatter.formatRequest(request, IOUtils.wrap(output));
-		}
-		
-		output.flush();
-		
-		HTTPResponse response = parser.parseResponse(IOUtils.wrap(input));
-
-		logger.debug("< socket:" + socket.hashCode() + " [request:" + request.hashCode() + "] (" + (new Date().getTime() - timestamp.getTime()) + "ms) " + response.getCode() + ": " + response.getMessage());
-		if (logger.isTraceEnabled() && response.getContent() != null) {
-			for (Header header : response.getContent().getHeaders()) {
-				logger.trace("	< [" + request.hashCode() + "] " + header.getName() + ": " + header.getValue());
-			}
-		}
-		
-		// push the response into the cookiestore
-		if (cookieHandler != null && response.getContent() != null)
-			cookieHandler.put(uri, getHeadersAsMap(response.getContent().getHeaders()));
-
-		return response;
 	}
 	private Map<String, List<String>> getHeadersAsMap(Header...headers) {
 		Map<String, List<String>> map = new HashMap<String, List<String>>();
