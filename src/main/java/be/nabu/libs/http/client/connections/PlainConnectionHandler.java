@@ -16,6 +16,7 @@ public class PlainConnectionHandler implements ConnectionHandler {
 	private SSLContext secureContext;
 	private List<Socket> openSockets = new ArrayList<Socket>();
 	private int connectionTimeout, socketTimeout;
+	private boolean closeOnRelease = true;
 	
 	public PlainConnectionHandler(SSLContext context, int connectionTimeout, int socketTimeout) {
 		this.secureContext = context;
@@ -50,7 +51,9 @@ public class PlainConnectionHandler implements ConnectionHandler {
 
 	@Override
 	public void release(Socket socket) throws IOException {
-		close(socket);
+		if (closeOnRelease) {
+			close(socket);
+		}
 	}
 
 	@Override
@@ -87,5 +90,16 @@ public class PlainConnectionHandler implements ConnectionHandler {
 	@Override
 	public int getConnectionTimeout() {
 		return connectionTimeout;
+	}
+	
+	public List<Socket> getOpenSockets() {
+		return new ArrayList<Socket>(openSockets);
+	}
+
+	public boolean isCloseOnRelease() {
+		return closeOnRelease;
+	}
+	public void setCloseOnRelease(boolean closeOnRelease) {
+		this.closeOnRelease = closeOnRelease;
 	}
 }
