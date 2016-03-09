@@ -116,10 +116,13 @@ public class DefaultHTTPClient implements HTTPClient {
 				// unauthorized, check if we can try again with authorization
 				else if (response.getCode() == 401 && authenticationHandler != null) {
 					Header authenticationHeader = HTTPUtils.authenticateServer(response, principal, authenticationHandler);
-					if (authenticationHeader != null)
+					if (authenticationHeader != null) {
+						request.getContent().removeHeader(HTTPUtils.SERVER_AUTHENTICATE_RESPONSE);
 						request.getContent().setHeader(authenticationHeader);
-					else
+					}
+					else {
 						requestSucceeded = true;
+					}
 				}
 				else if ((response.getCode() == 301 || response.getCode() == 302 || response.getCode() == 307) && followRedirects) {
 					Header locationHeader = MimeUtils.getHeader("Location", response.getContent().getHeaders());
