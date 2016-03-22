@@ -22,10 +22,19 @@ public class BasicAuthentication implements ClientAuthenticationHandler {
 	
 	@Override
 	public String authenticate(Principal principal, String challenge) {
-		if (challenge == null || !challenge.trim().toLowerCase().startsWith("basic"))
+		if (challenge == null || !challenge.trim().toLowerCase().startsWith("basic")) {
 			return null;
-		if (!(principal instanceof BasicPrincipal))
-			throw new SecurityException("The authentication is basic but the principal does is not of type BasicPrincipal");
+		}
+		// if the principal is missing we want a clean 401 from the server instead of an error here
+		else if (principal == null) {
+			logger.debug("Basic authentication is requested but no principal is present");
+			return null;
+		}
+		// if the principal is wrong, we return null because it is possible that there are multiple authentication mechanisms
+		else if (!(principal instanceof BasicPrincipal)) {
+			logger.debug("Basic authentication is requested but the principal that is given is not of the type 'BasicPrincipal'");
+			return null;
+		}
 		try {
 			byte [] base64 = IOUtils.toBytes(TranscoderUtils.transcodeBytes(
 				IOUtils.wrap((principal.getName() + ":" + ((BasicPrincipal) principal).getPassword()).getBytes("UTF-8"), true), 
