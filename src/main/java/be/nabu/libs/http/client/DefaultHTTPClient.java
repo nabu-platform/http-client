@@ -138,9 +138,9 @@ public class DefaultHTTPClient implements HTTPClient {
 						try {
 							URI newTarget = new URI(locationHeader.getValue());
 							// you can also have relative redirect locations although the standard (currently, this will change) states absolute
-							if (newTarget.getAuthority() == null)
-								newTarget = HTTPUtils.getURI(request, secure).relativize(new URI(locationHeader.getValue()));
-							
+							if (newTarget.getAuthority() == null) {
+								newTarget = HTTPUtils.getURI(request, secure).resolve(newTarget);
+							}
 							if (redirects.contains(newTarget)) {
 								if (!triedAbsoluteRedirect) {
 									request = HTTPUtils.redirect(request, newTarget, true);
