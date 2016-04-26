@@ -46,6 +46,7 @@ public class HTTPExecutor {
 	// these are the methods that are automatically assumed to be continuable
 	// you can force a continue by explicitly setting the header though
 	private static List<String> continuableMethods = Arrays.asList(new String [] { "PUT", "POST" });
+	private boolean debug = Boolean.parseBoolean(System.getProperty("http.client.debug", "false"));
 	
 	private Logger logger = LoggerFactory.getLogger(getClass());
 	
@@ -56,6 +57,7 @@ public class HTTPExecutor {
 		this.useContinue = useContinue;
 	}
 	
+	@SuppressWarnings("resource")
 	public HTTPResponse execute(Socket socket, HTTPRequest request, Principal principal, boolean secure, boolean followRedirects) throws IOException, FormatException, ParseException {
 		URI uri = null;
 
@@ -71,8 +73,10 @@ public class HTTPExecutor {
 		InputStream input = new BufferedInputStream(socket.getInputStream());
 		OutputStream output = new BufferedOutputStream(socket.getOutputStream());
 		
-//		output = new LoggingOutputStream(output);
-//		input = new LoggingInputStream(input);
+		if (debug) {
+			output = new LoggingOutputStream(output);
+			input = new LoggingInputStream(input);
+		}
 		
 		List<Header> additionalHeaders = new ArrayList<Header>();
 		if (cookieHandler != null) {
