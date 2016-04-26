@@ -50,7 +50,7 @@ public class DefaultHTTPClient implements HTTPClient {
 		Socket socket = null;
 		// some hosts keep sending 301 with the exact same Location as you are already accessing but actually their problem is with "GET / HTTP/1.1" and a host header and instead want the full location in the GET request
 		boolean triedAbsoluteRedirect = false;
-		boolean triedAfter401 = false;
+		int triesAfter401 = 0;
 		while (!requestSucceeded) {
 			URI uri = HTTPUtils.getURI(request, secure);
 			
@@ -116,12 +116,13 @@ public class DefaultHTTPClient implements HTTPClient {
 				}
 				// unauthorized, check if we can try again with authorization
 				else if (response.getCode() == 401 && authenticationHandler != null) {
-					// only retry once after we get a 401, if it fails and we get another 401, we need to stop
-					if (triedAfter401) {
+					// a 401 can involve a few back and forth messages, but currently no more than 2
+					// stop if we go over this amount to prevent request loops
+					if (triesAfter401 > 2) {
 						requestSucceeded = true;
 					}
 					else {
-						triedAfter401 = true;
+						triesAfter401++;
 						Header authenticationHeader = HTTPUtils.authenticateServer(response, principal, authenticationHandler);
 						if (authenticationHeader != null) {
 							request.getContent().removeHeader(HTTPUtils.SERVER_AUTHENTICATE_RESPONSE);
