@@ -35,6 +35,8 @@ public class DefaultHTTPClient implements HTTPClient {
 	 */
 	private boolean allowDegradingRedirect = true;
 	
+	private boolean retryOnFailure = false;
+	
 	public DefaultHTTPClient(ConnectionHandler connectionHandler, ClientAuthenticationHandler authenticationHandler, CookieHandler cookieHandler, boolean useContinue) {
 		this.connectionHandler = connectionHandler;
 		this.executor = new HTTPExecutor(new DefaultDynamicResourceProvider(), cookieHandler, useContinue);
@@ -84,17 +86,22 @@ public class DefaultHTTPClient implements HTTPClient {
 					catch (IOException e) {
 						// close the socket
 						connectionHandler.close(socket);
-						// and try once more
-						socket = connectionHandler.connect(host, port, secure);
-						synchronized(socket) {
-							try {
-								response = executor.execute(socket, request, principal, secure, followRedirects);
+						if (retryOnFailure) {
+							// and try once more
+							socket = connectionHandler.connect(host, port, secure);
+							synchronized(socket) {
+								try {
+									response = executor.execute(socket, request, principal, secure, followRedirects);
+								}
+								// if we still get an exception, just stop
+								catch (IOException f) {
+									connectionHandler.close(socket);
+									throw f;
+								}
 							}
-							// if we still get an exception, just stop
-							catch (IOException f) {
-								connectionHandler.close(socket);
-								throw f;
-							}
+						}
+						else {
+							throw e;
 						}
 					}
 				}
