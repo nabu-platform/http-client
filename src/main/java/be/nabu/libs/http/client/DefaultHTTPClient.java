@@ -239,4 +239,9 @@ public class DefaultHTTPClient implements HTTPClient {
 	public void setDynamicResourceProvider(DynamicResourceProvider dynamicResourceProvider) {
 		this.dynamicResourceProvider = dynamicResourceProvider;
 	}
+
+	@Override
+	public void close() throws IOException {
+		getConnectionHandler().close();
+	}
 }
