@@ -4,9 +4,14 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
 
 import be.nabu.libs.http.api.client.ConnectionHandler;
 import be.nabu.libs.http.api.client.Proxy;
@@ -41,6 +46,12 @@ public class PlainConnectionHandler implements ConnectionHandler {
 	@Override
 	public Socket connect(String host, int port, boolean secure) throws IOException {
 		Socket socket = secure ? secureContext.getSocketFactory().createSocket() : new Socket();
+		// support for SNI
+		if (socket instanceof SSLSocket) {
+			SSLParameters sslParameters = new SSLParameters();
+			sslParameters.setServerNames(Arrays.asList(new SNIServerName[] { new SNIHostName(host) }));
+			((SSLSocket) socket).setSSLParameters(sslParameters);
+		}
 		socket.connect(new InetSocketAddress(host, port), connectionTimeout);
 		socket.setSoTimeout(socketTimeout);
 		synchronized(openSockets) {
