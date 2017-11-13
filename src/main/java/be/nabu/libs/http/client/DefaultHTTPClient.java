@@ -60,7 +60,10 @@ public class DefaultHTTPClient implements HTTPClient {
 			int port = secure ? 443 : 80;
 			int indexOfColon = host.indexOf(':');
 			if (indexOfColon >= 0) {
-				port = new Integer(host.substring(indexOfColon + 1));
+				String substring = host.substring(indexOfColon + 1);
+				if (!substring.trim().isEmpty()) {
+					port = new Integer(substring);
+				}
 				host = host.substring(0, indexOfColon);
 			}
 
