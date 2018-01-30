@@ -36,8 +36,9 @@ public class BasicAuthentication implements ClientAuthenticationHandler {
 			return null;
 		}
 		try {
+			String password = ((BasicPrincipal) principal).getPassword();
 			byte [] base64 = IOUtils.toBytes(TranscoderUtils.transcodeBytes(
-				IOUtils.wrap((principal.getName() + ":" + ((BasicPrincipal) principal).getPassword()).getBytes("UTF-8"), true), 
+				IOUtils.wrap((principal.getName() + ":" + (password == null ? "" : password)).getBytes("UTF-8"), true), 
 				new Base64Encoder())
 			);
 			return "Basic " + new String(base64, "ASCII");
