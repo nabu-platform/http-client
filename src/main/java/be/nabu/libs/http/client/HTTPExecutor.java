@@ -153,7 +153,7 @@ public class HTTPExecutor {
 			if (!map.containsKey(header.getName().toLowerCase()))
 				map.put(header.getName().toLowerCase(), new ArrayList<String>());
 			if (header.getValue() != null)
-				map.get(header.getName().toLowerCase()).add(header.getValue());
+				map.get(header.getName().toLowerCase()).add(MimeUtils.getFullHeaderValue(header));
 		}
 		return map;
 	}
