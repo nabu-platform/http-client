@@ -81,9 +81,18 @@ public class HTTPExecutor {
 		List<Header> additionalHeaders = new ArrayList<Header>();
 		if (cookieHandler != null) {
 			Map<String, List<String>> cookies = cookieHandler.get(uri, getHeadersAsMap(request.getContent().getHeaders()));
+			StringBuilder cookieBuilder = new StringBuilder();
 			for (String cookie : cookies.keySet()) {
-				for (String value : cookies.get(cookie))
-					additionalHeaders.add(new MimeHeader(cookie, value));
+				for (String value : cookies.get(cookie)) {
+					//additionalHeaders.add(new MimeHeader(cookie, value));
+					if (!cookieBuilder.toString().isEmpty()) {
+						cookieBuilder.append(";");
+					}
+					cookieBuilder.append(value);
+				}
+			}
+			if (!cookieBuilder.toString().isEmpty()) {
+				additionalHeaders.add(new MimeHeader("Cookie", cookieBuilder.toString()));
 			}
 		}
 		request.getContent().setHeader(additionalHeaders.toArray(new Header[additionalHeaders.size()]));
