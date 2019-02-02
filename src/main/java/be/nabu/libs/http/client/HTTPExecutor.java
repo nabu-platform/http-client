@@ -52,7 +52,7 @@ public class HTTPExecutor {
 	
 	public HTTPExecutor(DynamicResourceProvider dynamicResourceProvider, CookieHandler cookieHandler, boolean useContinue) {
 		this.cookieHandler = cookieHandler;
-		this.formatter = new HTTPFormatter();
+		this.formatter = new HTTPFormatter(false);
 		this.parser = new HTTPParser(dynamicResourceProvider, true);
 		this.useContinue = useContinue;
 	}
