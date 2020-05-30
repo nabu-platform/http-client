@@ -23,6 +23,7 @@ import javax.net.ssl.SSLSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import be.nabu.libs.http.HTTPInterceptorManager;
 import be.nabu.libs.http.api.HTTPRequest;
 import be.nabu.libs.http.api.HTTPResponse;
 import be.nabu.libs.http.core.HTTPFormatter;
@@ -61,6 +62,9 @@ public class HTTPExecutor {
 	public HTTPResponse execute(Socket socket, HTTPRequest request, Principal principal, boolean secure, boolean followRedirects) throws IOException, FormatException, ParseException {
 		URI uri = null;
 
+		// allow interception of requests
+		request = HTTPInterceptorManager.intercept(request);
+		
 		try {
 			uri = request.getMethod().equalsIgnoreCase("CONNECT") 
 				? new URI(socket instanceof SSLSocket ? "https" : "http", socket.getInetAddress().getHostName() + ":" + socket.getPort(), "/", null, null) 
@@ -133,6 +137,9 @@ public class HTTPExecutor {
 			output.flush();
 			
 			HTTPResponse response = parser.parseResponse(readable);
+			
+			// allow intercept of response
+			response = HTTPInterceptorManager.intercept(response);
 	
 			logger.debug("< socket:" + socket.hashCode() + " [request:" + request.hashCode() + "] (" + (new Date().getTime() - timestamp.getTime()) + "ms) " + response.getCode() + ": " + response.getMessage());
 			if (logger.isTraceEnabled() && response.getContent() != null) {
