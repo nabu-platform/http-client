@@ -34,6 +34,7 @@ import be.nabu.utils.io.IOUtils;
 import be.nabu.utils.io.api.ByteBuffer;
 import be.nabu.utils.io.containers.EOFReadableContainer;
 import be.nabu.utils.mime.api.Header;
+import be.nabu.utils.mime.api.ModifiableContentPart;
 import be.nabu.utils.mime.impl.FormatException;
 import be.nabu.utils.mime.impl.MimeHeader;
 import be.nabu.utils.mime.impl.MimeUtils;
@@ -137,6 +138,12 @@ public class HTTPExecutor {
 			output.flush();
 			
 			HTTPResponse response = parser.parseResponse(readable);
+			
+			// we back it with a dynamic resource provider
+			// this "should" be reopenable but...
+			if (response.getContent() instanceof ModifiableContentPart) {
+				((ModifiableContentPart) response.getContent()).setReopenable(true);
+			}
 			
 			// allow intercept of response
 			response = HTTPInterceptorManager.intercept(response);
