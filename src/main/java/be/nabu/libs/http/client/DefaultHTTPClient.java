@@ -53,6 +53,7 @@ public class DefaultHTTPClient implements HTTPClient {
 		// some hosts keep sending 301 with the exact same Location as you are already accessing but actually their problem is with "GET / HTTP/1.1" and a host header and instead want the full location in the GET request
 		boolean triedAbsoluteRedirect = false;
 		int triesAfter401 = 0;
+		String lastHost = null;
 		while (!requestSucceeded) {
 			URI uri = HTTPUtils.getURI(request, secure);
 			
@@ -73,9 +74,15 @@ public class DefaultHTTPClient implements HTTPClient {
 				socket = null;
 			}
 			
+			if (lastHost != null && !lastHost.equals(host + ":" + port)) {
+				connectionHandler.close(socket);
+				socket = null;
+			}
+			
 			// (re)connect if no connection
 			if (socket == null) {
 				socket = connectionHandler.connect(host, port, secure);
+				lastHost = host + ":" + port;
 			}
 
 			try {
@@ -247,4 +254,9 @@ public class DefaultHTTPClient implements HTTPClient {
 	public void close() throws IOException {
 		getConnectionHandler().close();
 	}
+
+	public HTTPExecutor getExecutor() {
+		return executor;
+	}
+	
 }

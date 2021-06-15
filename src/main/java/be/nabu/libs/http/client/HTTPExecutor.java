@@ -24,8 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import be.nabu.libs.http.HTTPInterceptorManager;
+import be.nabu.libs.http.api.HTTPInterceptor;
 import be.nabu.libs.http.api.HTTPRequest;
 import be.nabu.libs.http.api.HTTPResponse;
+import be.nabu.libs.http.core.DefaultHTTPResponse;
 import be.nabu.libs.http.core.HTTPFormatter;
 import be.nabu.libs.http.core.HTTPParser;
 import be.nabu.libs.http.core.HTTPUtils;
@@ -45,6 +47,8 @@ public class HTTPExecutor {
 	private HTTPFormatter formatter;
 	private HTTPParser parser;
 	private boolean useContinue;
+	private HTTPInterceptor interceptor;
+	
 	// these are the methods that are automatically assumed to be continuable
 	// you can force a continue by explicitly setting the header though
 	private static List<String> continuableMethods = Arrays.asList(new String [] { "PUT", "POST" });
@@ -63,7 +67,11 @@ public class HTTPExecutor {
 	public HTTPResponse execute(Socket socket, HTTPRequest request, Principal principal, boolean secure, boolean followRedirects) throws IOException, FormatException, ParseException {
 		URI uri = null;
 
-		// allow interception of requests
+		if (interceptor != null) {
+			interceptor.intercept(request);
+		}
+		
+		// allow centralized interception of requests (may be deprecated?)
 		request = HTTPInterceptorManager.intercept(request);
 		
 		try {
@@ -139,12 +147,20 @@ public class HTTPExecutor {
 			
 			HTTPResponse response = parser.parseResponse(readable);
 			
+			// link to request
+			if (response instanceof DefaultHTTPResponse) {
+				((DefaultHTTPResponse) response).setRequest(request);
+			}
+			
 			// we back it with a dynamic resource provider
 			// this "should" be reopenable but...
 			if (response.getContent() instanceof ModifiableContentPart) {
 				((ModifiableContentPart) response.getContent()).setReopenable(true);
 			}
 			
+			if (interceptor != null) {
+				interceptor.intercept(response);
+			}
 			// allow intercept of response
 			response = HTTPInterceptorManager.intercept(response);
 	
@@ -183,5 +199,13 @@ public class HTTPExecutor {
 
 	public CookieHandler getCookieHandler() {
 		return cookieHandler;
+	}
+
+	public HTTPInterceptor getInterceptor() {
+		return interceptor;
+	}
+
+	public void setInterceptor(HTTPInterceptor interceptor) {
+		this.interceptor = interceptor;
 	}
 }
