@@ -74,7 +74,7 @@ public class DefaultHTTPClient implements HTTPClient {
 				socket = null;
 			}
 			
-			if (lastHost != null && !lastHost.equals(host + ":" + port)) {
+			if (socket != null && lastHost != null && !lastHost.equals(host + ":" + port)) {
 				connectionHandler.close(socket);
 				socket = null;
 			}
