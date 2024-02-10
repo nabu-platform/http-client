@@ -9,12 +9,13 @@ import java.security.Principal;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import be.nabu.libs.http.api.HTTPRequest;
 import be.nabu.libs.http.api.HTTPResponse;
 import be.nabu.libs.http.api.client.ClientAuthenticationHandler;
 import be.nabu.libs.http.api.client.ConnectionHandler;
-import be.nabu.libs.http.api.client.HTTPClient;
+import be.nabu.libs.http.api.client.TimedHTTPClient;
 import be.nabu.libs.http.core.DefaultDynamicResourceProvider;
 import be.nabu.libs.http.core.HTTPUtils;
 import be.nabu.libs.resources.api.DynamicResourceProvider;
@@ -23,7 +24,7 @@ import be.nabu.utils.mime.impl.FormatException;
 import be.nabu.utils.mime.impl.MimeHeader;
 import be.nabu.utils.mime.impl.MimeUtils;
 
-public class DefaultHTTPClient implements HTTPClient {
+public class DefaultHTTPClient implements TimedHTTPClient {
 	
 	private ConnectionHandler connectionHandler;
 	private ClientAuthenticationHandler authenticationHandler;
@@ -42,9 +43,14 @@ public class DefaultHTTPClient implements HTTPClient {
 		this.executor = new HTTPExecutor(new DefaultDynamicResourceProvider(), cookieHandler, useContinue);
 		this.authenticationHandler = authenticationHandler;
 	}
-		
+	
 	@Override
 	public HTTPResponse execute(HTTPRequest request, Principal principal, boolean secure, boolean followRedirects) throws IOException, FormatException, ParseException {
+		return execute(request, principal, secure, followRedirects, null, null);
+	}
+	
+	@Override
+	public HTTPResponse execute(HTTPRequest request, Principal principal, boolean secure, boolean followRedirects, Long timeout, TimeUnit unit) throws IOException, FormatException, ParseException {
 		boolean keepAlive = HTTPUtils.keepAlive(request);
 		boolean requestSucceeded = false;
 		HTTPResponse response = null;
@@ -88,6 +94,12 @@ public class DefaultHTTPClient implements HTTPClient {
 			try {
 				// for the actual sending, synchronize on the socket so only one party is interacting with it at the same time
 				synchronized(socket) {
+					if (timeout == null || timeout == 0) {
+						socket.setSoTimeout(0);
+					}
+					else {
+						socket.setSoTimeout((int) (unit == null ? timeout : TimeUnit.MILLISECONDS.convert(timeout, unit)));
+					}
 					// we try on the socket
 					try {
 						response = executor.execute(socket, request, principal, secure, followRedirects);
