@@ -51,6 +51,7 @@ import be.nabu.libs.http.core.HTTPUtils;
 import be.nabu.libs.resources.api.DynamicResourceProvider;
 import be.nabu.utils.io.IOUtils;
 import be.nabu.utils.io.api.ByteBuffer;
+import be.nabu.utils.io.api.WritableContainer;
 import be.nabu.utils.io.containers.EOFReadableContainer;
 import be.nabu.utils.mime.api.Header;
 import be.nabu.utils.mime.api.ModifiableContentPart;
@@ -143,6 +144,11 @@ public class HTTPExecutor {
 		EOFReadableContainer<ByteBuffer> readable = new EOFReadableContainer<ByteBuffer>(IOUtils.wrap(input));
 		
 		try {
+			// @2025-07-29: we had a case where a target server (uitdatabank) has file upload logic that does not work if we format the request directly to the socket
+			// instead we have to format the entire request and then send it at once, presumably this is to do with TCP framing of the packages underneath
+			// to control this behavior I've added this header so you can force local formatting before fully pushing it
+			// note however that this impacts memory usage so should be used with caution
+			Header bufferRequestHeader = request.getContent() != null ? MimeUtils.getHeader("X-Nabu-Buffer-Request-Formatting", request.getContent().getHeaders()) : null;
 			if (forceUseContinue || (request.getVersion() >= 1.1 && continuableMethods.contains(request.getMethod().toUpperCase()) && useContinue && request.getContent() != null)) {
 				logger.trace("> [" + request.hashCode() + "] Headers only: 100-Continue");
 				request.getContent().setHeader(new MimeHeader("Expect", "100-Continue"));
@@ -157,6 +163,13 @@ public class HTTPExecutor {
 					logger.trace("> [" + request.hashCode() + "] Headers rejected [" + continueResponse.getCode() + "]: " + continueResponse.getMessage());
 					return continueResponse;
 				}
+			}
+			else if (bufferRequestHeader != null && "true".equalsIgnoreCase(bufferRequestHeader.getValue())) {
+				// does not need to be transmitted
+				request.getContent().removeHeader("X-Nabu-Buffer-Request-Formatting");
+				WritableContainer<ByteBuffer> bufferWritable = IOUtils.bufferWritable(IOUtils.wrap(output), IOUtils.newByteBuffer());
+				formatter.formatRequest(request, bufferWritable);
+				bufferWritable.flush();
 			}
 			else {
 				formatter.formatRequest(request, IOUtils.wrap(output));
