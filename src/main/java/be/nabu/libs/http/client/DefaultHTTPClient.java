@@ -287,5 +287,12 @@ public class DefaultHTTPClient implements TimedHTTPClient {
 	public HTTPExecutor getExecutor() {
 		return executor;
 	}
-	
+
+	public boolean isForceContentLength() {
+		return executor.isForceContentLength();
+	}
+
+	public void setForceContentLength(boolean forceContentLength) {
+		executor.setForceContentLength(forceContentLength);
+	}
 }

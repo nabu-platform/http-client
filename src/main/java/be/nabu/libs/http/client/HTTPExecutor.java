@@ -68,6 +68,7 @@ public class HTTPExecutor {
 	private HTTPParser parser;
 	private boolean useContinue;
 	private HTTPInterceptor interceptor;
+	private boolean forceContentLength = false;
 	
 	// these are the methods that are automatically assumed to be continuable
 	// you can force a continue by explicitly setting the header though
@@ -168,11 +169,21 @@ public class HTTPExecutor {
 				// does not need to be transmitted
 				request.getContent().removeHeader("X-Nabu-Buffer-Request-Formatting");
 				WritableContainer<ByteBuffer> bufferWritable = IOUtils.bufferWritable(IOUtils.wrap(output), IOUtils.newByteBuffer());
-				formatter.formatRequest(request, bufferWritable);
+				if (forceContentLength) {
+					formatter.formatRequestWithContentLength(request, bufferWritable);
+				}
+				else {
+					formatter.formatRequest(request, bufferWritable);
+				}
 				bufferWritable.flush();
 			}
 			else {
-				formatter.formatRequest(request, IOUtils.wrap(output));
+				if (forceContentLength) {
+					formatter.formatRequestWithContentLength(request, IOUtils.wrap(output));
+				}
+				else {
+					formatter.formatRequest(request, IOUtils.wrap(output));
+				}
 			}
 			
 			output.flush();
@@ -238,4 +249,13 @@ public class HTTPExecutor {
 	public void setInterceptor(HTTPInterceptor interceptor) {
 		this.interceptor = interceptor;
 	}
+
+	public boolean isForceContentLength() {
+		return forceContentLength;
+	}
+
+	public void setForceContentLength(boolean forceContentLength) {
+		this.forceContentLength = forceContentLength;
+	}
+	
 }
